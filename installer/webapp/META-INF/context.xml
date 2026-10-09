@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Private-network only. Adjust the allow list to the management subnets
+  that should reach the console. Do not publish this context to the internet.
+-->
+<Context path="/ad-housekeeping" reloadable="false">
+  <Valve className="org.apache.catalina.valves.RemoteAddrValve"
+         allow="127\.\d+\.\d+\.\d+|::1|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+" />
+</Context>

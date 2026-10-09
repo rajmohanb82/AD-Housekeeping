@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block body %}
+<section class="page-head">
+  <div>
+    <p class="eyebrow">Event browser</p>
+    <h1>Security and directory events</h1>
+    <p class="lede">Informational sign-ins stay here. The alert queue is the categorized subset a person should act on.</p>
+  </div>
+</section>
+
+<form class="search" method="get" action="{{ url_for('events') }}">
+  <label class="grow">Find an event, account, or computer
+    <input name="q" value="{{ query }}" placeholder="4740 or priya.nair">
+  </label>
+  {% if category %}<input type="hidden" name="category" value="{{ category }}">{% endif %}
+  <button class="btn secondary" type="submit">Search</button>
+</form>
+
+<div class="filters">
+  <a class="{% if not category %}on{% endif %}" href="{{ url_for('events', q=query) }}">All channels</a>
+  {% for name in categories %}
+  <a class="{% if category == name %}on{% endif %}" href="{{ url_for('events', category=name, q=query) }}">{{ name }}</a>
+  {% endfor %}
+</div>
+
+<div class="log-wrap">
+<table class="log">
+  <thead>
+    <tr>
+      <th>Record</th>
+      <th>Event</th>
+      <th>When</th>
+      <th>Category</th>
+      <th>Account</th>
+      <th>What happened</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for event in events %}
+    <tr>
+      <td class="mono">{{ event.record }}</td>
+      <td>
+        {% if event.event_id in event_docs %}
+        <a class="mono" href="{{ event_docs[event.event_id].url }}" target="_blank" rel="noreferrer">{{ event.event_id }}</a>
+        {% else %}
+        <span class="mono">{{ event.event_id }}</span>
+        {% endif %}
+      </td>
+      <td>{{ event.logged|when }}</td>
+      <td><span class="sev {{ event.severity }}">{{ event.category }}</span></td>
+      <td>
+        {% if event.account %}
+        <a href="{{ url_for('account', sam=event.account) }}">{{ event.account }}</a>
+        {% else %}—{% endif %}
+      </td>
+      <td>
+        {{ event.summary }}
+        <span class="where">{{ event.computer }} · {{ event.channel }}</span>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% if not events %}
+<p class="empty">No events match.</p>
+{% endif %}
+{% endblock %}

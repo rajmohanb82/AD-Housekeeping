@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block body %}
+<section class="page-head">
+  <div>
+    <p class="eyebrow">Recommendations</p>
+    <h1>Microsoft guidance, applied to this domain</h1>
+    <p class="lede">Each note is written for Fabrikam and linked to the Learn or Support article it came from. The console does not copy those articles. Open them when you want Microsoft's own wording.</p>
+  </div>
+</section>
+{% for category, items in grouped.items() %}
+<section class="guide-group">
+  <h2 data-category="{{ category }}">{{ category }}</h2>
+  <div class="guide-grid">
+    {% for item in items %}
+    <a class="card link-card" href="{{ url_for('guidance_article', slug=item.slug) }}">
+      <strong>{{ item.title }}</strong>
+      <span>{{ item.summary }}</span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endfor %}
+{% endblock %}

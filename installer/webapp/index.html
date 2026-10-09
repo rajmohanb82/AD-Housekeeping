@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Directory Keep · Apache Tomcat</title>
+  <style>
+    :root { color-scheme: light; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: #eef2f6;
+      color: #122033;
+      font: 16px/1.5 "Segoe UI", sans-serif;
+    }
+    main {
+      width: min(640px, calc(100% - 2rem));
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 2rem 2.1rem;
+      box-shadow: 0 12px 32px rgba(16, 32, 51, 0.08);
+    }
+    p.kicker { letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.75rem; color: #5c6b7c; }
+    h1 { font-weight: 600; font-size: 2rem; line-height: 1.15; margin: 0.2rem 0 0.6rem; letter-spacing: -0.02em; }
+    a.button {
+      display: inline-block;
+      margin-top: 0.6rem;
+      background: #0f6cbd;
+      color: #f4f7fb;
+      text-decoration: none;
+      border-radius: 999px;
+      padding: 0.7rem 1.1rem;
+    }
+    code { font-family: Consolas, monospace; }
+  </style>
+</head>
+<body>
+  <main>
+    <p class="kicker">Apache Tomcat 10.1 · context /ad-housekeeping</p>
+    <h1>Directory Keep is deployed.</h1>
+    <p>This page is the front door on the member server. The housekeeping console runs in the Python service on <code>127.0.0.1:8765</code>. Tomcat does not need a Domain Admin identity to serve it.</p>
+    <p>Open the console from the server itself, or through a private-network path your firewall already allows.</p>
+    <a class="button" href="http://127.0.0.1:8765/">Open the console</a>
+  </main>
+</body>
+</html>

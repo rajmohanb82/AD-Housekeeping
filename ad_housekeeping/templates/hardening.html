@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% from "icons.html" import icon %}
+{% block body %}
+<section class="page-head">
+  <div>
+    <p class="eyebrow">{{ icon("shield") }} Baselines</p>
+    <h1>Server hardening</h1>
+    <p class="lede">Recommendations from Microsoft’s Windows Server and domain-controller guidance. Lab rows are the Fabrikam baseline. Servers you add mix that baseline with what this workstation could actually see on the network.</p>
+  </div>
+  <a class="btn" href="{{ url_for('report_pdf') }}">{{ icon("file") }} Download PDF</a>
+</section>
+
+<div class="filters">
+  <a class="{% if not status %}on{% endif %}" href="{{ url_for('hardening') }}">Open items</a>
+  <a class="{% if status == 'fail' %}on{% endif %}" href="{{ url_for('hardening', status='fail') }}">Failed</a>
+  <a class="{% if status == 'review' %}on{% endif %}" href="{{ url_for('hardening', status='review') }}">Needs review</a>
+  <a class="{% if status == 'pass' %}on{% endif %}" href="{{ url_for('hardening', status='pass') }}">Passing</a>
+  <a class="{% if status == 'all' %}on{% endif %}" href="{{ url_for('hardening', status='all') }}">Everything</a>
+</div>
+
+{% if not rows %}
+<p class="empty">Nothing in this slice.</p>
+{% endif %}
+
+<div class="harden-list">
+  {% for row in rows %}
+  <article class="card harden">
+    <header>
+      <span class="sev {{ row.severity }}">{{ row.severity }}</span>
+      <span class="flag {% if row.status == 'fail' %}bad{% elif row.status == 'pass' %}good{% else %}warn{% endif %}">{{ row.status }}</span>
+    </header>
+    <h2>{{ row.title }}</h2>
+    <p class="hint">{{ icon("server") }} {{ row.server }} · {{ row.role|replace('-', ' ') }} · {{ row.source }}</p>
+    <p>{{ row.summary }}</p>
+    <p><strong>Do this.</strong> {{ row.action }}</p>
+    <p><a href="{{ row.doc_url }}" target="_blank" rel="noreferrer">{{ row.doc_title }}</a></p>
+  </article>
+  {% endfor %}
+</div>
+{% endblock %}

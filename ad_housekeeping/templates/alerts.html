@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block body %}
+<section class="page-head">
+  <div>
+    <p class="eyebrow">Alert queue</p>
+    <h1>Categorized findings</h1>
+    <p class="lede">Published from the last scan. Filters do not hide the underlying directory — they only narrow this queue.</p>
+  </div>
+</section>
+
+<div class="filters">
+  <a class="{% if not severity and not category %}on{% endif %}" href="{{ url_for('alerts') }}">All</a>
+  {% for name in ['critical', 'high', 'medium', 'low'] %}
+  <a class="sev-link {{ name }} {% if severity == name %}on{% endif %}" href="{{ url_for('alerts', severity=name) }}">{{ name }}</a>
+  {% endfor %}
+  {% for name in present_categories %}
+  <a class="{% if category == name %}on{% endif %}" href="{{ url_for('alerts', category=name) }}">{{ name }}</a>
+  {% endfor %}
+</div>
+
+{% if not alerts %}
+<p class="empty">Nothing in this slice of the queue.</p>
+{% endif %}
+
+<ul class="alert-list roomy">
+  {% for alert in alerts %}
+  <li>
+    <a href="{{ url_for('alert_detail', alert_id=alert.id) }}">
+      <span class="sev {{ alert.severity }}">{{ alert.severity }}</span>
+      <span>
+        <strong>{{ alert.title }}</strong>
+        <em data-category="{{ alert.category }}">{{ alert.category }} · {{ alert.subject }} · {{ alert.source }}</em>
+      </span>
+    </a>
+  </li>
+  {% endfor %}
+</ul>
+{% endblock %}

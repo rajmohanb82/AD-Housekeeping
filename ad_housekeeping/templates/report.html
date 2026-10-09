@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% from "icons.html" import icon %}
+{% block body %}
+<section class="page-head">
+  <div>
+    <p class="eyebrow">{{ icon("file") }} Reports</p>
+    <h1>Housekeeping report</h1>
+    <p class="lede">A printable pack of the published findings, the hardening list, and the servers in scope. The PDF does not contain the directory password.</p>
+  </div>
+  <a class="btn" href="{{ url_for('report_pdf') }}">{{ icon("file") }} Download PDF</a>
+</section>
+
+<article class="sheet">
+  <header class="sheet-band">
+    <p>Directory Keep</p>
+    <strong>Housekeeping report</strong>
+    <span>{{ state.domain.dns }} · {{ state.published_summary.band }}</span>
+  </header>
+  <section class="sheet-score">
+    <b>{{ state.published_summary.score }}</b>
+    <div>
+      <strong>{{ state.published_summary.total }} findings</strong>
+      <p>{{ state.published_summary.briefing }}</p>
+    </div>
+  </section>
+  <h2>Findings</h2>
+  <table class="plain">
+    <thead><tr><th>Severity</th><th>Category</th><th>Finding</th></tr></thead>
+    <tbody>
+      {% for alert in state.published_alerts %}
+      <tr>
+        <td><span class="sev {{ alert.severity }}">{{ alert.severity }}</span></td>
+        <td>{{ alert.category }}</td>
+        <td>{{ alert.title }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <h2>Hardening still open</h2>
+  <ul class="evidence">
+    {% for row in hardening if row.status != 'pass' %}
+    <li><strong>{{ row.server }}</strong> — {{ row.title }}. {{ row.action }}</li>
+    {% endfor %}
+  </ul>
+  <p class="hint">Signed-in target: {% if authenticated %}{{ connection.username }} @ {{ connection.host }}{% else %}preview, not signed in{% endif %}. Password omitted.</p>
+</article>
+{% endblock %}

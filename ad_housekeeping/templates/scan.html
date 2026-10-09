@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block body %}
+{% if not authenticated %}
+<div class="flash danger">A scan runs only after the setup wizard authenticates. <a href="{{ url_for('setup') }}">Sign in to the directory</a>. The password is not saved in a file.</div>
+{% endif %}
+<section class="page-head">
+  <div>
+    <p class="eyebrow">Scan</p>
+    <h1>Publish a housekeeping scan</h1>
+    <p class="lede">The scan reads the lab Security log, the Directory Service log, account hygiene, privileged groups, and replication. It files what is actionable and leaves ordinary sign-ins in the event browser.</p>
+  </div>
+</section>
+
+<section class="split scan-layout">
+  <article class="card">
+    <h2>What this pass checks</h2>
+    <ol class="steps" id="steps">
+      <li><strong>Security logs</strong><span>4625, 4740, 4728, 4672, 1102, 4719, and the informational 4624s that should stay informational.</span></li>
+      <li><strong>Directory Service</strong><span>Replication event 1925 and directory change 5136.</span></li>
+      <li><strong>Accounts</strong><span>Lockouts, Guest, Administrator, stale people, expired passwords, service accounts.</span></li>
+      <li><strong>Privilege</strong><span>Standing Domain Admins membership and Protected Users.</span></li>
+      <li><strong>Topology</strong><span>FSMO owners and site links, including a single-domain global-catalog note.</span></li>
+      <li><strong>Guidance</strong><span>Each finding is tied to a Microsoft Learn article and a support note.</span></li>
+    </ol>
+    <form method="post" action="{{ url_for('scan_run') }}" id="scan-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button class="btn" type="submit" id="scan-button">Publish scan</button>
+    </form>
+    <p class="hint" id="scan-status"></p>
+  </article>
+  <article class="card">
+    <h2>Last published</h2>
+    {% if state.scans %}
+    {% set last = state.scans[0] %}
+    <p class="score-line"><strong>{{ last.score }}</strong> {{ last.band }}</p>
+    <p>{{ last.alerts }} findings · {{ last.at|when }} · {{ last.by }}</p>
+    {% if drift %}
+    <p class="hint">Changes are waiting. Publishing will rewrite the queue from the directory as it is now.</p>
+    {% endif %}
+    {% else %}
+    <p>No scan has been published.</p>
+    {% endif %}
+    <h3>Why informational events are not alerts</h3>
+    <p>A successful sign-in for Sarah Chen is context. A cleared Security log is a finding. The event browser keeps both. The alert queue keeps only the second kind, grouped so helpdesk and Tier-0 are not looking at the same list.</p>
+  </article>
+</section>
+{% endblock %}

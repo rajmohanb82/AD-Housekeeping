@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block body %}
+<section class="page-head">
+  <div>
+    <p class="eyebrow">Deployment</p>
+    <h1>Apache Tomcat on a member server</h1>
+    <p class="lede">Directory Keep is a Python service. Apache Tomcat 10.1 is the front door you deploy in Active Directory: a private-network context on a Tier-1 server, running as a group managed service account that is not a Domain Admin.</p>
+  </div>
+  <form method="post" action="{{ url_for('deploy_stage') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <button class="btn" type="submit">Stage webapp</button>
+  </form>
+</section>
+
+<ol class="pipeline">
+  <li><strong>Member server</strong><span>Windows Server already joined to fabrikam.corp. The installer does not join a domain for you.</span></li>
+  <li><strong>Tier-1 OU</strong><span>Place the host in the servers OU, not the domain controllers OU.</span></li>
+  <li><strong>gMSA</strong><span>svc-adhk$ runs Tomcat and the Python service. It can reset and unlock in the people OU only.</span></li>
+  <li><strong>Tomcat 10.1</strong><span>Context /ad-housekeeping on port 8080, limited to private addresses.</span></li>
+  <li><strong>Python service</strong><span>Waitress on 127.0.0.1:8765. Tomcat links operators to it.</span></li>
+</ol>
+
+<section class="card">
+  <h2>Preflight on this workstation</h2>
+  <ul class="checks">
+    {% for check in preflight %}
+    <li class="{% if check.ok %}ok{% else %}no{% endif %}">
+      <strong>{{ check.name }}</strong>
+      <span>{{ check.detail }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  <p class="hint">A red domain-join row is expected on the interview laptop. The Fabrikam directory in this app is the simulation.</p>
+</section>
+
+<section class="split">
+  <article class="card">
+    <h2>This machine</h2>
+    <pre>python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python -m ad_housekeeping</pre>
+    <p class="hint">Console: http://127.0.0.1:8765</p>
+    <pre>./installer/install.sh
+./installer/install.sh --run</pre>
+  </article>
+  <article class="card">
+    <h2>Domain member server</h2>
+    <pre># Stage only — writes files, does not touch AD
+.\installer\Install-DirectoryKeep.ps1 -Mode Stage
+
+# Install Tomcat 10.1.60 and the Python service
+# Requires elevation. Does not change directory ACLs.
+.\installer\Install-DirectoryKeep.ps1 -Mode Install</pre>
+    <p class="hint">Delegation is printed as a follow-up. It is not executed.</p>
+  </article>
+</section>
+
+<section class="card">
+  <h2>What gets deployed</h2>
+  <p>The Tomcat context is a branded front door plus a private-network valve. The housekeeping console itself stays in Python so the scan, the role model, and the recommendations are one codebase.</p>
+  {% for name, body in preview.items() %}
+  <h3>{{ name }}</h3>
+  <pre>{{ body }}</pre>
+  {% endfor %}
+</section>
+{% endblock %}

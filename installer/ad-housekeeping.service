@@ -1,0 +1,14 @@
+[Unit]
+Description=Directory Keep Active Directory housekeeping console
+After=network.target
+
+[Service]
+Type=simple
+User=adhk
+WorkingDirectory=/opt/directory-keep
+Environment=ADHK_PORT=8765
+ExecStart=/opt/directory-keep/.venv/bin/python -m ad_housekeeping
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

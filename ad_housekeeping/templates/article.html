@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block body %}
+<p class="crumb"><a href="{{ url_for('guidance') }}">Microsoft guidance</a> / {{ article.category }}</p>
+<section class="page-head">
+  <div>
+    <p class="eyebrow">{{ article.category }}</p>
+    <h1>{{ article.title }}</h1>
+    <p class="lede">{{ article.summary }}</p>
+  </div>
+</section>
+<article class="card prose">
+  <h2>Why it matters</h2>
+  <p>{{ article.why }}</p>
+  <h2>Recommended actions</h2>
+  <ol class="actions">
+    {% for step in article.actions %}
+    <li>{{ step }}</li>
+    {% endfor %}
+  </ol>
+  <h2>Microsoft documentation</h2>
+  <ul class="docs">
+    {% for doc in article.docs %}
+    <li><a href="{{ doc.url }}" target="_blank" rel="noreferrer">{{ doc.title }}</a></li>
+    {% endfor %}
+  </ul>
+  <h2>When to involve Microsoft Support</h2>
+  <p>{{ article.support }}</p>
+  {% if article.commands %}
+  <h2>Production commands</h2>
+  <p class="hint">These are the Active Directory cmdlets an operator would run on a domain-joined management host. The lab records an equivalent result locally and does not execute them.</p>
+  <pre>{% for line in article.commands %}{{ line }}
+{% endfor %}</pre>
+  {% endif %}
+</article>
+{% endblock %}

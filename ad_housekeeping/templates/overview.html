@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block body %}
+<section class="page-head">
+  <div>
+    <p class="eyebrow">Fabrikam Industries · single-domain forest</p>
+    <h1>Housekeeping for {{ state.domain.dns }}</h1>
+    <p class="lede">{{ summary.briefing }}</p>
+  </div>
+  <form method="post" action="{{ url_for('scan_run') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <button class="btn" type="submit">Publish scan</button>
+  </form>
+</section>
+
+<section class="hero">
+  <div class="ring-card">
+    <div class="ring band-{{ summary.band|lower|replace(' ', '-') }}">
+      <svg viewBox="0 0 120 120" aria-hidden="true">
+        <circle cx="60" cy="60" r="52" class="track"></circle>
+        <circle cx="60" cy="60" r="52" class="value" stroke-dasharray="326.73" stroke-dashoffset="{{ ring }}"></circle>
+      </svg>
+      <div class="ring-label">
+        <strong>{{ summary.score }}</strong>
+        <span>{{ summary.band }}</span>
+      </div>
+    </div>
+    <p class="ring-note">Score from the last published scan. Critical findings cost more than stale workstations.</p>
+  </div>
+  <div class="stats">
+    <a class="stat" href="{{ url_for('alerts') }}">
+      <span>Open alerts</span>
+      <strong>{{ summary.total }}</strong>
+      <em>{{ summary.by_severity.critical }} critical · {{ summary.by_severity.high }} high</em>
+    </a>
+    <a class="stat" href="{{ url_for('accounts', view='locked') }}">
+      <span>Locked accounts</span>
+      <strong>{{ summary.locked }}</strong>
+      <em>Live directory, not the last scan</em>
+    </a>
+    <a class="stat" href="{{ url_for('infrastructure') }}">
+      <span>Domain controllers</span>
+      <strong>{{ summary.healthy_domain_controllers }}/{{ summary.domain_controllers }}</strong>
+      <em>Healthy replication partners</em>
+    </a>
+    <article class="stat quiet">
+      <span>Functional level</span>
+      <strong class="small">{{ state.domain.functional_level.split()[-1] }}</strong>
+      <em>{{ state.domain.netbios }} · {{ state.domain.dc_os }}</em>
+    </article>
+  </div>
+</section>
+
+<section class="split">
+  <article class="card">
+    <header class="card-head">
+      <h2>Findings by category</h2>
+      <a href="{{ url_for('alerts') }}">Open the queue</a>
+    </header>
+    <ul class="bars">
+      {% for name, count in categories.items() %}
+      <li>
+        <div class="bar-label">
+          <a href="{{ url_for('alerts', category=name) }}" data-category="{{ name }}">{{ name }}</a>
+          <span>{{ count }}</span>
+        </div>
+        <div class="bar"><span data-category="{{ name }}" style="width: {{ (count / summary.total * 100) if summary.total else 0 }}%"></span></div>
+      </li>
+      {% endfor %}
+    </ul>
+  </article>
+  <article class="card">
+    <header class="card-head">
+      <h2>Needs a person</h2>
+      <a href="{{ url_for('alerts') }}">All alerts</a>
+    </header>
+    <ul class="alert-list">
+      {% for alert in alerts %}
+      <li>
+        <a href="{{ url_for('alert_detail', alert_id=alert.id) }}">
+          <span class="sev {{ alert.severity }}">{{ alert.severity }}</span>
+          <span>
+            <strong>{{ alert.title }}</strong>
+            <em>{{ alert.category }} · {{ alert.subject }}</em>
+          </span>
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+  </article>
+</section>
+
+<section class="dc-row">
+  {% for dc in state.domain_controllers %}
+  <a class="dc {% if dc.replication != 'Healthy' %}fault{% endif %}" href="{{ url_for('infrastructure') }}">
+    <span class="dot"></span>
+    <strong>{{ dc.name }}</strong>
+    <em>{{ dc.site }}</em>
+    <small>{{ dc.roles[0] if dc.roles else dc.replication }}</small>
+  </a>
+  {% endfor %}
+</section>
+
+<section class="card">
+  <header class="card-head">
+    <h2>Scan journal</h2>
+    <a href="{{ url_for('scan') }}">How a scan works</a>
+  </header>
+  <table class="plain">
+    <thead>
+      <tr><th>Published</th><th>By</th><th>Health</th><th>Findings</th></tr>
+    </thead>
+    <tbody>
+      {% for scan in state.scans[:5] %}
+      <tr>
+        <td>{{ scan.at|when }}</td>
+        <td>{{ scan.by }}</td>
+        <td>{{ scan.score }} · {{ scan.band }}</td>
+        <td>{{ scan.alerts }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

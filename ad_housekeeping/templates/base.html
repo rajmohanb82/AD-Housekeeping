@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title }} · Directory Keep</title>
+  <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+</head>
+<body>
+  {% from "icons.html" import icon %}
+  <a class="skip" href="#content">Skip to content</a>
+  <div class="shell">
+    <aside class="sidebar">
+      <a class="brand" href="{{ url_for('overview') }}">
+        <span class="mark" aria-hidden="true"></span>
+        <span>
+          <strong>Directory Keep</strong>
+          <em>{{ connection.domain or "fabrikam.corp" }}</em>
+        </span>
+      </a>
+      <nav class="nav" aria-label="Primary">
+        {% for group, items in nav %}
+        <p class="nav-label">{{ group }}</p>
+        {% for key, label, endpoint, icon_name in items %}
+        <a class="{% if page == key %}active{% endif %}" href="{{ url_for(endpoint) }}">{{ icon(icon_name) }}<span>{{ label }}</span></a>
+        {% endfor %}
+        {% endfor %}
+      </nav>
+      <div class="side-foot">
+        <p class="who">{{ operator.name }}</p>
+        <p class="role-name">{{ operator.title }}</p>
+        <p class="group">{{ operator.group }}</p>
+        <form method="post" action="{{ url_for('lab_reset') }}" onsubmit="return confirm('Restore the morning snapshot? Unlocks and resets in this lab will be cleared.');">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <button class="text-btn" type="submit">Reset lab data</button>
+        </form>
+      </div>
+    </aside>
+    <div class="main">
+      <header class="top">
+        {% if authenticated %}
+        <p class="lab-pill">Signed in · {{ connection.username }} @ {{ connection.host }} · password not stored</p>
+        {% else %}
+        <p class="lab-pill">Not signed in · <a href="{{ url_for('setup') }}">Open the setup wizard</a></p>
+        {% endif %}
+        <form class="roles" method="post" action="{{ url_for('set_role') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <span class="roles-label">Role</span>
+          <button name="role" value="auditor" class="{% if role == 'auditor' %}on{% endif %}" type="submit">Auditor</button>
+          <button name="role" value="helpdesk" class="{% if role == 'helpdesk' %}on{% endif %}" type="submit">Helpdesk</button>
+          <button name="role" value="tier0" class="{% if role == 'tier0' %}on{% endif %}" type="submit">Tier-0</button>
+        </form>
+      </header>
+      <main id="content">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% for category, message in messages %}
+          <div class="flash {{ category }}" role="status">{{ message }}</div>
+          {% endfor %}
+        {% endwith %}
+        {% if drift and page not in ['deploy', 'guidance'] %}
+        <div class="drift">
+          The directory changed after the last published scan.
+          <a href="{{ url_for('scan') }}">Publish a new scan</a>
+          to refresh the queue.
+        </div>
+        {% endif %}
+        {% block body %}{% endblock %}
+      </main>
+    </div>
+  </div>
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+{% macro icon(name) %}
+<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+  {% if name == "key" %}
+  <circle cx="8" cy="14" r="3.2"></circle><path d="M11 14h9l-1.6 1.8 1.6 1.6-1.5 1.6"></path>
+  {% elif name == "grid" %}
+  <rect x="4" y="4" width="6.5" height="6.5" rx="1"></rect><rect x="13.5" y="4" width="6.5" height="6.5" rx="1"></rect><rect x="4" y="13.5" width="6.5" height="6.5" rx="1"></rect><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1"></rect>
+  {% elif name == "scan" %}
+  <circle cx="11" cy="11" r="5.5"></circle><path d="M15.5 15.5 20 20"></path>
+  {% elif name == "bell" %}
+  <path d="M6 16h12l-1.2-2V10a4.8 4.8 0 0 0-9.6 0v4z"></path><path d="M10 16a2 2 0 0 0 4 0"></path>
+  {% elif name == "list" %}
+  <path d="M8 7h12M8 12h12M8 17h12"></path><circle cx="4.5" cy="7" r="1"></circle><circle cx="4.5" cy="12" r="1"></circle><circle cx="4.5" cy="17" r="1"></circle>
+  {% elif name == "nodes" %}
+  <circle cx="6" cy="7" r="2"></circle><circle cx="18" cy="7" r="2"></circle><circle cx="12" cy="17" r="2"></circle><path d="M8 8.2 10.8 15M16 8.2 13.2 15M8 7h8"></path>
+  {% elif name == "server" %}
+  <rect x="4" y="4" width="16" height="6" rx="1.4"></rect><rect x="4" y="14" width="16" height="6" rx="1.4"></rect><path d="M7 7h.1M7 17h.1"></path>
+  {% elif name == "people" %}
+  <circle cx="9" cy="8" r="2.4"></circle><circle cx="16" cy="9" r="2"></circle><path d="M4.5 18c.6-2.4 2.4-3.6 4.5-3.6s3.9 1.2 4.5 3.6M14 14.6c1.3-.4 2.6-.2 3.6.6 1 .8 1.5 1.8 1.8 2.8"></path>
+  {% elif name == "shield" %}
+  <path d="M12 3.5 19 6.2v5.2c0 4.2-2.8 7.2-7 8.6-4.2-1.4-7-4.4-7-8.6V6.2z"></path>
+  {% elif name == "file" %}
+  <path d="M7 3.5h7l4 4V20a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1z"></path><path d="M14 3.8V8h4"></path>
+  {% elif name == "book" %}
+  <path d="M5 5.5A2 2 0 0 1 7 3.5h12V20H7a2 2 0 0 0-2 2z"></path><path d="M5 19.5A2 2 0 0 1 7 17.5h12"></path>
+  {% elif name == "box" %}
+  <path d="M4 8.5 12 4l8 4.5v9L12 22l-8-4.5z"></path><path d="M12 13V22M4.2 8.6 12 13l7.8-4.4"></path>
+  {% endif %}
+</svg>
+{% endmacro %}

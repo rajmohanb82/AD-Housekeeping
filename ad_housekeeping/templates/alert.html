@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block body %}
+<p class="crumb"><a href="{{ url_for('alerts') }}">Alerts</a> / {{ alert.category }}</p>
+<section class="page-head">
+  <div>
+    <p class="eyebrow"><span class="sev {{ alert.severity }}">{{ alert.severity }}</span> {{ alert.category }}</p>
+    <h1>{{ alert.title }}</h1>
+    <p class="lede">{{ alert.summary }}</p>
+  </div>
+</section>
+
+{% if resolved %}
+<div class="flash ok">The directory no longer matches this finding. Publish a scan to drop it from the queue.</div>
+{% endif %}
+
+<section class="split">
+  <article class="card">
+    <h2>Evidence</h2>
+    <ul class="evidence">
+      {% for line in alert.evidence %}
+      <li>{{ line }}</li>
+      {% endfor %}
+    </ul>
+    <p class="hint">Source: {{ alert.source }}. Subject: {{ alert.subject }}.</p>
+    {% if alert.subject_kind == 'user' %}
+    <p><a class="btn secondary" href="{{ url_for('account', sam=alert.subject) }}">Open {{ alert.subject }}</a></p>
+    {% endif %}
+  </article>
+  <article class="card">
+    <h2>Why it matters</h2>
+    <p>{{ article.why }}</p>
+    <h3>What to do</h3>
+    <ol class="actions">
+      {% for step in article.actions %}
+      <li>{{ step }}</li>
+      {% endfor %}
+    </ol>
+  </article>
+</section>
+
+<section class="card">
+  <header class="card-head">
+    <h2>Microsoft documentation</h2>
+    <a href="{{ url_for('guidance_article', slug=article.slug) }}">Full recommendation</a>
+  </header>
+  <ul class="docs">
+    {% for doc in article.docs %}
+    <li><a href="{{ doc.url }}" target="_blank" rel="noreferrer">{{ doc.title }}</a></li>
+    {% endfor %}
+  </ul>
+  <h3>Support</h3>
+  <p>{{ article.support }}</p>
+  {% if article.commands %}
+  <h3>Production command</h3>
+  <p class="hint">Shown for the interview. Nothing here is sent to a domain controller.</p>
+  <pre>{% for line in article.commands %}{{ line }}
+{% endfor %}</pre>
+  {% endif %}
+</section>
+
+{% if can_close %}
+<section class="card">
+  <h2>Record the investigation</h2>
+  <p>Closing this item does not restore the cleared log. It records that Tier-0 reviewed it, so the next scan can move on.</p>
+  <form method="post" action="{{ url_for('close_alert', alert_id=alert.id) }}" class="stack">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label>What you found
+      <textarea name="reason" required minlength="8" placeholder="Change CHG-2041 confirmed by Helena. SIEM still has the log."></textarea>
+    </label>
+    <button class="btn" type="submit">Close incident</button>
+  </form>
+</section>
+{% endif %}
+{% endblock %}

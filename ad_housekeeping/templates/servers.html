@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% from "icons.html" import icon %}
+{% block body %}
+<section class="page-head">
+  <div>
+    <p class="eyebrow">{{ icon("server") }} Scope</p>
+    <h1>Windows servers</h1>
+    <p class="lede">Domain controllers are already in the lab. Add any other Windows Server by hostname. Directory Keep resolves the name, checks the usual management ports, and files hardening recommendations for that role.</p>
+  </div>
+</section>
+
+<section class="split">
+  <article class="card">
+    <h2>Add a server</h2>
+    <form method="post" action="{{ url_for('servers_add') }}" class="stack">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <label>Host name
+        <input name="hostname" required placeholder="FAB-APP01 or app01.fabrikam.corp">
+      </label>
+      <label>Role
+        <select name="role">
+          <option value="member-server">Member server</option>
+          <option value="domain-controller">Domain controller</option>
+        </select>
+      </label>
+      <button class="btn" type="submit">{{ icon("scan") }} Add and scan</button>
+    </form>
+    <p class="hint">A name that does not resolve from this laptop is still added. You get the role baseline, plus a note that DNS did not answer here.</p>
+  </article>
+  <article class="card">
+    <h2>What the port check looks for</h2>
+    <ul class="evidence">
+      <li>88 Kerberos, 389 LDAP, 636 LDAPS</li>
+      <li>445 SMB</li>
+      <li>3389 Remote Desktop</li>
+      <li>5985 WinRM</li>
+    </ul>
+    <p class="hint">An open port is not a vulnerability by itself. It tells the recommendation which control to emphasize, such as NLA when 3389 answers.</p>
+  </article>
+</section>
+
+<section class="card">
+  <h2>Domain controllers</h2>
+  <div class="server-grid">
+    {% for dc in state.domain_controllers %}
+    <article class="server-tile {% if dc.replication != 'Healthy' %}fault{% endif %}">
+      <span class="ico-tile">{{ icon("nodes") }}</span>
+      <strong>{{ dc.name }}</strong>
+      <em>{{ dc.site }} · {{ dc.ip }}</em>
+      <span class="flag {% if dc.replication == 'Healthy' %}good{% else %}bad{% endif %}">{{ dc.replication }}</span>
+    </article>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="card">
+  <h2>Added servers</h2>
+  {% if not state.managed_servers %}
+  <p class="empty">No extra servers yet. Add a hostname above to scan beyond the domain controllers.</p>
+  {% endif %}
+  <div class="server-grid">
+    {% for server in state.managed_servers %}
+    <article class="server-tile">
+      <span class="ico-tile">{{ icon("server") }}</span>
+      <strong>{{ server.name }}</strong>
+      <em>{{ server.role|replace('-', ' ') }}{% if server.address %} · {{ server.address }}{% endif %}</em>
+      <span class="flag {% if server.resolved %}good{% else %}warn{% endif %}">{% if server.resolved %}Resolved{% else %}Not resolved here{% endif %}</span>
+      <p class="hint">{{ server.note }}</p>
+    </article>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

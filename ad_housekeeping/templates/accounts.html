@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block body %}
+<section class="page-head">
+  <div>
+    <p class="eyebrow">Identities</p>
+    <h1>Unlock, reset, and review</h1>
+    <p class="lede">Helpdesk can unlock and reset standard people. Privileged, built-in, and service accounts stay with Tier-0. The password you type is checked and then discarded.</p>
+  </div>
+</section>
+
+<form class="search" method="get">
+  <label class="grow">Name, account, or department
+    <input name="q" value="{{ query }}" placeholder="Priya, svc-sql, Finance">
+  </label>
+  {% if view != 'all' %}<input type="hidden" name="view" value="{{ view }}">{% endif %}
+  <button class="btn secondary" type="submit">Search</button>
+</form>
+
+<div class="filters">
+  {% for key, label in [('all','All'), ('locked','Locked'), ('password','Password'), ('stale','Stale'), ('privileged','Privileged'), ('service','Service')] %}
+  <a class="{% if view == key %}on{% endif %}" href="{{ url_for('accounts', view=key, q=query) }}">{{ label }}</a>
+  {% endfor %}
+</div>
+
+<table class="plain people">
+  <thead>
+    <tr><th>Person</th><th>OU</th><th>Password</th><th>Last sign-in</th><th>State</th></tr>
+  </thead>
+  <tbody>
+    {% for user in accounts %}
+    <tr>
+      <td>
+        <a class="person" href="{{ url_for('account', sam=user.sam) }}">
+          <strong>{{ user.display }}</strong>
+          <span>{{ user.sam }} · {{ user.title }}</span>
+        </a>
+      </td>
+      <td>{{ user.ou_label }}</td>
+      <td>{{ user.password_age_days }} days{% if user.password_expired %} · expired{% endif %}</td>
+      <td>{{ user.last_logon_days|ago }}</td>
+      <td class="flags">
+        {% for flag in user.flags %}
+        <span class="flag {{ flag.tone }}">{{ flag.label }}</span>
+        {% endfor %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% if not accounts %}
+<p class="empty">No accounts match.</p>
+{% endif %}
+{% endblock %}

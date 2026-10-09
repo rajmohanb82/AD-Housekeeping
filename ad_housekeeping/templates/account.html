@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block body %}
+<p class="crumb"><a href="{{ url_for('accounts') }}">Accounts</a> / {{ user.ou_label }}</p>
+<section class="page-head">
+  <div>
+    <p class="eyebrow">{{ user.upn }}</p>
+    <h1>{{ user.display }}</h1>
+    <p class="lede">{{ user.title }}{% if user.department %} · {{ user.department }}{% endif %}</p>
+    <div class="flags">
+      {% for flag in flags %}
+      <span class="flag {{ flag.tone }}">{{ flag.label }}</span>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="split">
+  <article class="card">
+    <h2>Directory</h2>
+    <ul class="fsmo">
+      <li><span>Distinguished name</span><strong class="wrap">CN={{ user.display }},{{ user.ou }}</strong></li>
+      <li><span>Enabled</span><strong>{{ 'Yes' if user.enabled else 'No' }}</strong></li>
+      <li><span>Locked</span><strong>{{ 'Yes' if user.locked else 'No' }}</strong></li>
+      <li><span>Bad password count</span><strong>{{ user.bad_pwd_count }}</strong></li>
+      <li><span>Lockout caller</span><strong>{{ user.lockout_caller or '—' }}</strong></li>
+      <li><span>Password age</span><strong>{{ user.password_age_days }} days</strong></li>
+      <li><span>Never expires</span><strong>{{ 'Yes' if user.password_never_expires else 'No' }}</strong></li>
+      <li><span>Must change</span><strong>{{ 'Yes' if user.must_change else 'No' }}</strong></li>
+      <li><span>Last sign-in</span><strong>{{ user.last_logon_days|ago }}</strong></li>
+      <li><span>Groups</span><strong class="wrap">{{ user.groups|join(', ') }}</strong></li>
+    </ul>
+  </article>
+  <article class="card">
+    <h2>Recent events</h2>
+    {% if related %}
+    <ul class="evidence">
+      {% for event in related %}
+      <li>
+        {% if event.event_id in event_docs %}
+        <a href="{{ event_docs[event.event_id].url }}" target="_blank" rel="noreferrer">{{ event.event_id }}</a>
+        {% else %}{{ event.event_id }}{% endif %}
+        · {{ event.logged|when }} — {{ event.summary }}
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="hint">No lab events name this account.</p>
+    {% endif %}
+    {% if journal %}
+    <h3>Operator journal</h3>
+    <ul class="evidence">
+      {% for row in journal %}
+      <li>{{ row.at|when }} · {{ row.actor }} · {{ row.action }} · {{ row.result }}. {{ row.detail }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </article>
+</section>
+
+{% if user.sam == 'krbtgt' %}
+<section class="card">
+  <h2>krbtgt is not a helpdesk reset</h2>
+  <p>Reset the password twice. Wait longer than the maximum ticket lifetime between the two resets (10 hours unless you changed it). Confirm replication first, especially while Singapore is failing.</p>
+  <p><a class="btn secondary" href="{{ url_for('guidance_article', slug='krbtgt') }}">Open the Microsoft procedure</a></p>
+</section>
+{% else %}
+<section class="split">
+  <article class="card">
+    <h2>Unlock</h2>
+    {% if permissions.unlock[0] %}
+    <form method="post" action="{{ url_for('unlock', sam=user.sam) }}" class="stack">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <label>Reason
+        <input name="reason" required minlength="8" placeholder="Cleared saved credentials on WKS-1042">
+      </label>
+      <button class="btn" type="submit">Unlock account</button>
+    </form>
+    <pre>Unlock-ADAccount -Identity {{ user.sam }}</pre>
+    {% elif user.locked %}
+    <p>{{ permissions.unlock[1] }}</p>
+    <p><a href="{{ url_for('guidance_article', slug='tiered-administration') }}">Why this role stops here</a></p>
+    {% else %}
+    <p>This account is not locked.</p>
+    {% endif %}
+  </article>
+  <article class="card">
+    <h2>Reset password</h2>
+    {% if permissions.reset[0] %}
+    <form method="post" action="{{ url_for('reset_password', sam=user.sam) }}" class="stack" id="reset-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <label>New passphrase
+        <input name="password" id="password" type="password" autocomplete="new-password" required minlength="14">
+      </label>
+      <p class="meter" id="meter" aria-live="polite">At least 14 characters, three character classes, not the person's name.</p>
+      <label>Confirm
+        <input name="confirm" type="password" autocomplete="new-password" required minlength="14">
+      </label>
+      {% if not user.service %}
+      <label class="check"><input type="checkbox" name="must_change" value="yes" checked> User must change password at next sign-in</label>
+      {% endif %}
+      <label>Reason
+        <input name="reason" required minlength="8" placeholder="Expired password, verified caller">
+      </label>
+      <button class="btn" type="submit">Reset password</button>
+    </form>
+    <pre>Set-ADAccountPassword -Identity {{ user.sam }} -Reset -NewPassword (Read-Host -AsSecureString)
+Set-ADUser -Identity {{ user.sam }} -ChangePasswordAtLogon $true</pre>
+    {% else %}
+    <p>{{ permissions.reset[1] }}</p>
+    {% if role != 'tier0' %}
+    <p><a href="{{ url_for('guidance_article', slug='tiered-administration') }}">Tier model</a></p>
+    {% endif %}
+    {% endif %}
+  </article>
+</section>
+
+{% if permissions.remove_admin[0] or permissions.protect[0] or permissions.disable[0] %}
+<section class="split">
+  {% if permissions.remove_admin[0] %}
+  <article class="card">
+    <h2>Remove from Domain Admins</h2>
+    <p>Standing membership is the finding. Removing it writes a 4729 in the lab log.</p>
+    <form method="post" action="{{ url_for('remove_admin', sam=user.sam) }}" class="stack">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <label>Change ticket
+        <input name="reason" required minlength="8" placeholder="No ticket for the 4728 add">
+      </label>
+      <button class="btn danger" type="submit">Remove Domain Admins</button>
+    </form>
+  </article>
+  {% endif %}
+  {% if permissions.protect[0] %}
+  <article class="card">
+    <h2>Protected Users</h2>
+    <p>Test this on one admin first. The account needs an AES key from a password set on a current domain controller.</p>
+    <form method="post" action="{{ url_for('protect', sam=user.sam) }}" class="stack">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <label>Reason
+        <input name="reason" required minlength="8" placeholder="AES key verified, pilot account">
+      </label>
+      <button class="btn secondary" type="submit">Add to Protected Users</button>
+    </form>
+  </article>
+  {% endif %}
+  {% if permissions.disable[0] %}
+  <article class="card">
+    <h2>Disable account</h2>
+    <form method="post" action="{{ url_for('disable', sam=user.sam) }}" class="stack">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <label>Reason
+        <input name="reason" required minlength="8" placeholder="Built-in account should not be daily-use">
+      </label>
+      <button class="btn danger" type="submit">Disable</button>
+    </form>
+  </article>
+  {% endif %}
+</section>
+{% elif role != 'tier0' and ('Domain Admins' in user.groups or user.builtin or user.service) %}
+<p class="hint">Switch to Tier-0 for privileged, built-in, or service changes. Helpdesk stops at standard people.</p>
+{% endif %}
+{% endif %}
+{% endblock %}

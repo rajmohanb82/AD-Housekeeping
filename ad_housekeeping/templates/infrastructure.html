@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block body %}
+<section class="page-head">
+  <div>
+    <p class="eyebrow">{{ state.domain.forest }} · {{ state.domain.functional_level }}</p>
+    <h1>Directory infrastructure</h1>
+    <p class="lede">Three sites, four domain controllers, one forest. Every DC is a global catalog. In a single-domain forest the infrastructure master can sit on a global catalog without the usual multi-domain warning.</p>
+  </div>
+</section>
+
+<section class="sites">
+  {% for site in state.sites %}
+  <article class="card site">
+    <header>
+      <h2>{{ site.name }}</h2>
+      <p>{{ site.location }} · {{ site.subnet }}</p>
+    </header>
+    <ul>
+      {% for dc in state.domain_controllers if dc.site == site.name %}
+      <li class="{% if dc.replication != 'Healthy' %}fault{% endif %}">
+        <strong>{{ dc.name }}</strong>
+        <span>{{ dc.ip }} · {{ dc.os }}{% if dc.gc %} · Global catalog{% endif %}</span>
+        {% if dc.roles %}
+        <em>{{ dc.roles|join(' · ') }}</em>
+        {% else %}
+        <em>{{ dc.replication }}</em>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+  </article>
+  {% endfor %}
+</section>
+
+<section class="card">
+  <header class="card-head">
+    <h2>Replication</h2>
+    <a href="{{ url_for('guidance_article', slug='replication') }}">Microsoft guidance</a>
+  </header>
+  <table class="plain">
+    <thead>
+      <tr><th>From</th><th>To</th><th>Link</th><th>Last success</th><th>Schedule</th><th>State</th></tr>
+    </thead>
+    <tbody>
+      {% for link in state.replication %}
+      <tr>
+        <td>{{ link.source }}</td>
+        <td>{{ link.dest }}</td>
+        <td>{{ link.site_link }}</td>
+        <td>{{ link.minutes }} min</td>
+        <td>{{ link.schedule_minutes }} min</td>
+        <td><span class="sev {% if link.status == 'Healthy' %}info{% else %}high{% endif %}">{{ link.status }}</span></td>
+      </tr>
+      {% if link.error %}
+      <tr class="detail"><td colspan="6">{{ link.error }}</td></tr>
+      {% endif %}
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="split">
+  <article class="card">
+    <h2>FSMO</h2>
+    <ul class="fsmo">
+      {% for dc in state.domain_controllers %}
+        {% for role in dc.roles %}
+        <li><span>{{ role }}</span><strong>{{ dc.name }}</strong></li>
+        {% endfor %}
+      {% endfor %}
+    </ul>
+    <p class="hint">PDC emulator is FAB-DC01, which is also where the lockout events in this lab were written. Collect that DC's Security log when a caller name is missing.</p>
+  </article>
+  <article class="card">
+    <h2>Password and lockout policy</h2>
+    <ul class="fsmo">
+      <li><span>Minimum length</span><strong>{{ state.policy.min_length }}</strong></li>
+      <li><span>Complexity</span><strong>{{ 'On' if state.policy.complexity else 'Off' }}</strong></li>
+      <li><span>Maximum age</span><strong>{{ state.policy.max_age_days }} days</strong></li>
+      <li><span>History</span><strong>{{ state.policy.history }}</strong></li>
+      <li><span>Lockout</span><strong>{{ state.policy.lockout_threshold }} / {{ state.policy.lockout_minutes }} min</strong></li>
+      <li><span>Fine-grained policies</span><strong>{{ state.policy.fgpp|length }}</strong></li>
+    </ul>
+    <p><a href="{{ url_for('guidance_article', slug='password-policy') }}">Why this policy is its own finding</a></p>
+  </article>
+</section>
+
+<section class="card">
+  <h2>Workstations and servers</h2>
+  <table class="plain">
+    <thead>
+      <tr><th>Name</th><th>Site</th><th>OS</th><th>Last logon</th><th>Note</th></tr>
+    </thead>
+    <tbody>
+      {% for computer in state.computers %}
+      <tr>
+        <td>{{ computer.name }}</td>
+        <td>{{ computer.site }}</td>
+        <td>{{ computer.os }}</td>
+        <td>{{ computer.last_logon_days|ago }}</td>
+        <td>{{ computer.note }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}
